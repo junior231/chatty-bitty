@@ -1,0 +1,40 @@
+import { getSession } from "@auth0/nextjs-auth0";
+import clientPromise from "lib/mongodb";
+
+export default async function handler(req, res) {
+  try {
+    // get logged in user.
+    const { user } = await getSession(req, res);
+
+    const client = await clientPromise;
+    const db = client.db("ChattyBitty");
+
+    // get chats from logged in user chats record in database
+    // omit values in projection object
+    // sort by latest chat entry
+    // convert to array
+    const chats = await db
+      .collection("chats")
+      .find(
+        {
+          userId: user.sub,
+        },
+        {
+          projection: {
+            userId: 0,
+            messages: 0,
+          },
+        }
+      )
+      .sort({
+        _id: -1,
+      })
+      .toArray();
+
+    res.status(200).json({ chats });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "An error occured when getting your chat list" });
+  }
+}
