@@ -34,8 +34,9 @@ Follow these steps to get Chatty Bitty up and running on your local environment:
 
 2. Configure environment variables:
 
-Create a .env.local file in root directory
-Setup and provide API keys and credentials for OpenAI, MongoDB, and Auth0 and add them to the .env.local file.
+Create a .env.local file in root directory:
+
+- Setup and provide API keys and credentials for OpenAI, MongoDB, and Auth0 and add them to the .env.local file.
 Run the application:
 ```bash
 npm run dev
