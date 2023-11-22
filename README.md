@@ -26,4 +26,18 @@ Follow these steps to get Chatty Bitty up and running on your local environment:
    ```bash
    git clone https://github.com/your-username/chatty-bitty.git
 
+   ```bash
+   cd chatty-bitty
+   npm install
+
+2. Configure environment variables:
+
+Create a .env file based on the provided .env.example.
+Obtain API keys and credentials for OpenAI, MongoDB, and Auth0 and add them to the .env file.
+Run the application:
+```bash
+npm run dev
+
+Visit http://localhost:3000 in your browser to experience Chatty Bitty.
+
 
