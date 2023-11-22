@@ -13,10 +13,42 @@ export default async function handler(req, res) {
     // destructure chat id, role and content from request body.
     const { chatId, role, content } = req.body;
 
+    // validate chatId
+    let objectId;
+    try {
+      objectId = new ObjectId(chatId);
+    } catch (error) {
+      res.status(422).json({
+        message: "Invalid chat ID",
+      });
+      return;
+    }
+
+    // validate content
+    if (
+      !content ||
+      typeof content !== "string" ||
+      (role === "user" && content.length > 200) ||
+      (role === "assistant" && content.length > 100000)
+    ) {
+      res.status(422).json({
+        message: "Content is required and must be less than 200 characters",
+      });
+      return;
+    }
+
+    // validate role
+    if (role !== "user" && role !== "assistant") {
+      res.status(422).json({
+        message: "Role must be either assistant or user",
+      });
+      return;
+    }
+
     // find chat by id in database and update it
     const chat = await db.collection("chats").findOneAndUpdate(
       {
-        _id: new ObjectId(chatId),
+        _id: objectId,
         userId: user.sub,
       },
       {

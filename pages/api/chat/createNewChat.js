@@ -9,6 +9,14 @@ export default async function handler(req, res) {
     // get message from request body
     const { message } = req.body;
 
+    // validate message data
+    if (!message || typeof message !== "string" || message.length > 200) {
+      res.status(422).json({
+        message: "Message is required and must be less than 200 characters",
+      });
+      return;
+    }
+
     // create new user message object
     const newUserMessage = {
       role: "user",

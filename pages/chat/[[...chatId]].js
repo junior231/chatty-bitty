@@ -8,6 +8,8 @@ import { useRouter } from "next/router";
 import { getSession } from "@auth0/nextjs-auth0";
 import clientPromise from "lib/mongodb";
 import { ObjectId } from "mongodb";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faRobot } from "@fortawesome/free-solid-svg-icons";
 
 export default function ChatPage({
   // make messages prop an array by default
@@ -21,8 +23,12 @@ export default function ChatPage({
   const [generatingResponse, setGeneratingResponse] = useState(false);
   const [newChatId, setNewChatId] = useState(null);
   const [fullMessage, setFullMessage] = useState("");
+  const [originalChatId, setOriginalChatId] = useState(chatId);
 
   const router = useRouter();
+
+  // check if chatId route has changed
+  const routeHasChanged = chatId !== originalChatId;
 
   // reset states whenever chatId route changes
   useEffect(() => {
@@ -32,7 +38,7 @@ export default function ChatPage({
 
   // if new chat is done generating and full message exists, update new chat messages array
   useEffect(() => {
-    if (!generatingResponse && fullMessage) {
+    if (!routeHasChanged && !generatingResponse && fullMessage) {
       setNewChatMessages((prev) => [
         ...prev,
         {
@@ -43,7 +49,7 @@ export default function ChatPage({
       ]);
       setFullMessage("");
     }
-  }, [generatingResponse, fullMessage]);
+  }, [generatingResponse, fullMessage, routeHasChanged]);
 
   useEffect(() => {
     // if new chat response is done generating and newChatId is !null, re-direct to /chat/chatId page
@@ -55,9 +61,10 @@ export default function ChatPage({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     // initiate loading state
     setGeneratingResponse(true);
+
+    setOriginalChatId(chatId);
 
     // add new chat messages to existing array of chatMessages.
     setNewChatMessages((prev) => {
@@ -123,16 +130,40 @@ export default function ChatPage({
       <div className="grid h-screen grid-cols-[260px_1fr]">
         <ChatSidebar chatId={chatId} />
         <div className="flex flex-col overflow-hidden bg-gray-700">
-          <div className="flex-1 overflow-y-scroll text-white">
-            {allMessages.map((message) => (
-              <Message
-                key={message._id}
-                role={message.role}
-                content={message.content}
-              />
-            ))}
-            {!!incomingMessage && (
-              <Message role="assistant" content={incomingMessage} />
+          <div className="flex flex-1 flex-col-reverse overflow-y-auto text-white">
+            {!allMessages.length && !incomingMessage && (
+              <div className="m-auto flex items-center justify-center text-center">
+                <div>
+                  <FontAwesomeIcon
+                    icon={faRobot}
+                    className="text-6xl text-emerald-200"
+                  />
+                  <h1 className="mt-2 text-4xl font-bold text-white/50">
+                    Ask me a question!
+                  </h1>
+                </div>
+              </div>
+            )}
+
+            {!!allMessages.length && (
+              <div className="mb-auto ">
+                {allMessages.map((message) => (
+                  <Message
+                    key={message._id}
+                    role={message.role}
+                    content={message.content}
+                  />
+                ))}
+                {!!incomingMessage && !routeHasChanged && (
+                  <Message role="assistant" content={incomingMessage} />
+                )}
+                {!!incomingMessage && !!routeHasChanged && (
+                  <Message
+                    content="Only one message at a time. Please allow any other responses to complete before sending another message"
+                    role="notice"
+                  />
+                )}
+              </div>
             )}
           </div>
           <footer className="bg-gray-800 p-10">
@@ -162,14 +193,35 @@ export const getServerSideProps = async (ctx) => {
 
   // if chatId exists, find and return chat from database
   if (chatId) {
+    // check if chatId is a valid mongoDb Object id, else redirect to chat page
+    let objectId;
+
+    try {
+      objectId = new ObjectId(chatId);
+    } catch (error) {
+      return {
+        redirect: {
+          destination: "/chat",
+        },
+      };
+    }
+
     const { user } = await getSession(ctx.req, ctx.res);
     const client = await clientPromise;
     const db = await client.db("ChattyBitty");
     const chat = await db.collection("chats").findOne({
       userId: user.sub,
-      // convert chatId to mongoDB object id
-      _id: new ObjectId(chatId),
+      _id: objectId,
     });
+
+    // check if chat record was found in db, else redirect
+    if (!chat) {
+      return {
+        redirect: {
+          destination: "/chat",
+        },
+      };
+    }
 
     // return chatID, title and message when page loads
     return {

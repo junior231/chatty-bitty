@@ -9,6 +9,18 @@ export default async function handler(req) {
     // get message and chatId as chatIdFromParam from req.json when sendMessage api is called
     const { chatId: chatIdFromParam, message } = await req.json();
 
+    // validate message data
+    if (!message || typeof message !== "string" || message.length > 200) {
+      return new Response(
+        {
+          message: "Message is required and must be less than 200 characters",
+        },
+        {
+          status: 422,
+        }
+      );
+    }
+
     // assign chatIdFromParam value to chatId
     let chatId = chatIdFromParam;
 
@@ -135,6 +147,11 @@ export default async function handler(req) {
 
     return new Response(stream);
   } catch (error) {
-    console.log("AN ERROR OCCURED IN SENDMESSAGE: ", error);
+    return new Response(
+      { message: "An error occurred in sendMessage" },
+      {
+        status: 500,
+      }
+    );
   }
 }

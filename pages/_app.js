@@ -3,9 +3,16 @@ import "../styles/globals.css";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
+import { Outfit } from "next/font/google";
 
 // prevent server side rendering icon error
 config.autoAddCss = false;
+
+// configure google font
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
 
 function App({ Component, pageProps }) {
   return (
@@ -13,7 +20,10 @@ function App({ Component, pageProps }) {
       <Head>
         <link rel="icon" href="/favicon.png" />
       </Head>
-      <Component {...pageProps} />
+      {/* add custom tailwind css config to entire app pages */}
+      <main className={`${outfit.variable} font-body`}>
+        <Component {...pageProps} />
+      </main>
     </UserProvider>
   );
 }
