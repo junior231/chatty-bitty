@@ -24,7 +24,7 @@ Follow these steps to get Chatty Bitty up and running on your local environment:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/chatty-bitty.git
+   git clone https://github.com/junior231/chatty-bitty.git
    ```
 
    ```bash
